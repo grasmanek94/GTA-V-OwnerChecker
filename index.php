@@ -55,6 +55,9 @@
         //keep this enabled, for more informations check: https://www.openssl.org/~bodo/ssl-poodle.pdf
         CURLOPT_SSLVERSION       => CURL_SSLVERSION_TLSv1,
         CURLOPT_SSL_CIPHER_LIST  => 'TLSv1',
+        
+        //uncomment it and download this file http://curl.haxx.se/ca/cacert.pem (its bundle of CA Root Certificates) if you have problems with verifying ssl cert
+        //CURLOPT_CAINFO           => realpath(dirname(__FILE__)) . '/cacert.pem',
 
         //if you have problems, uncomment these (will make your script vulnerable to MITM attacks):
         //CURLOPT_SSL_VERIFYPEER   => 0,
