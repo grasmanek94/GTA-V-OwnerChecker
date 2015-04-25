@@ -9,6 +9,8 @@
         Requires:  http://sourceforge.net/projects/simplehtmldom/
         Thanks to: https://github.com/gta5-map/Social-Club-API-cheat-sheet
     */
+    
+    if(!defined('CURL_SSLVERSION_TLSv1')) define('CURL_SSLVERSION_TLSv1', 1); // some PHP versions seems to lack this predefined variable
 
     //list of ip addresses that are allowed to execute this script
     $allowed_ips = array('0.0.0.0', '127.0.0.1', '192.168.2.1');
@@ -50,11 +52,11 @@
     );
 
     $ssl_curl_problem_solving = array(
-        //if you have problems, uncomment these:
-        //CURLOPT_SSLVERSION       => CURL_SSLVERSION_TLSv1_2,
-        //CURLOPT_SSL_CIPHER_LIST  => 'TLSv1',
+        //keep this enabled, for more informations check: https://www.openssl.org/~bodo/ssl-poodle.pdf
+        CURLOPT_SSLVERSION       => CURL_SSLVERSION_TLSv1,
+        CURLOPT_SSL_CIPHER_LIST  => 'TLSv1',
 
-        //if you have more problems than just problems, uncomment these (will make your script vulnerable to MITM attacks):
+        //if you have problems, uncomment these (will make your script vulnerable to MITM attacks):
         //CURLOPT_SSL_VERIFYPEER   => 0,
         //CURLOPT_SSL_VERIFYHOST   => 0   
     );
