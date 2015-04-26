@@ -52,7 +52,7 @@
     );
 
     $ssl_curl_problem_solving = array(
-        //keep this enabled, for more informations check: https://www.openssl.org/~bodo/ssl-poodle.pdf
+        //keep this enabled, for more information check: https://www.openssl.org/~bodo/ssl-poodle.pdf
         CURLOPT_SSLVERSION       => CURL_SSLVERSION_TLSv1,
         CURLOPT_SSL_CIPHER_LIST  => 'TLSv1',
         
@@ -64,18 +64,18 @@
         //CURLOPT_SSL_VERIFYHOST   => 0   
     );
 
-    function GetRequestVerificationToken($index)
-    {  
+    function GetRequestData($index, $url, $https)
+    {
         $ch_home = curl_init();
 
         global $static_curl_options;
         global $ssl_curl_problem_solving;
 
         curl_setopt_array( $ch_home, (array(
-            CURLOPT_URL              => 'https://socialclub.rockstargames.com/profile/signin/',
+            CURLOPT_URL              => $url,
             CURLOPT_FOLLOWLOCATION   => true,
             CURLOPT_HTTPHEADER       => array('Accept-Encoding: gzip, deflate')
-        ) + $static_curl_options + $ssl_curl_problem_solving));
+        ) + $static_curl_options + ($https ? $ssl_curl_problem_solving : array())));
 
         $homepage = curl_exec($ch_home);
 
@@ -87,10 +87,15 @@
             $req = $html->find('input[name=__RequestVerificationToken]', $index);
             if($req !== null)
             {
-                return $req->value;
+                return array(0 => $req->value, 1 => $homepage);
             }
         }
-        return "";
+        return array(0 => "", 1 => $homepage);        
+    }
+
+    function GetRequestVerificationToken($index, $url = 'https://socialclub.rockstargames.com/profile/signin/', $https = true)
+    {  
+        return GetRequestData($index, $url, $https)[0];
     }
 
     function Login($index = 0)
@@ -135,7 +140,25 @@
         return (int)(strpos($data, $username) !== false);    
     }
 
-    function CheckUser($retries, $maxretries)
+    function LoginErrorCode($index)
+    {
+        $status = Login($index);
+
+        if($status == 2)
+        {
+            echo('2<br/>SSL Error occured, please reconfigure [ssl_curl_problem_solving] array (SSL options) in script.');
+        }
+        elseif ($status == 1)
+        {
+            echo('1<br/>Error occured, cannot access Rockstar Social Club data.');
+        }
+        else if($status == 0)
+        {
+            echo('0<br/>Error occured, cannot log-in to Rockstar Social Club with provided credentials.');
+        }        
+    }
+
+    function CheckUser($retries, $maxretries, $index = 0)
     {
         $SocialClubID = isset($_GET['SocialClubID']) ? $_GET['SocialClubID'] : '';
 
@@ -152,60 +175,115 @@
 
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+        curl_close ($ch);
+
         if ($http_code == 200) 
         {
             if(strlen($buf3) > 0)
             {
                 echo('5<br/>Success, user own a copy of GTA:V on any platform.');
-                curl_close ($ch);
-                unset($ch);  
-                exit();
             }
             else
             {
                 echo('4<br/>Error occured, user does not have GTA:V or privacy settings of user do not allow viewing of this information.');
-                curl_close ($ch);
-                unset($ch);  
-                exit();
             }
         }
         else if($http_code == 302)
         {
-            echo('3<br/>Error occured, user does not exist.');
-            curl_close ($ch);
-            unset($ch);  
-            exit();            
+            echo('3<br/>Error occured, user does not exist.');           
         }
         else if($retries < $maxretries)
         {
-            curl_close ($ch);
-            unset($ch);  
-            Login();
+            Login($index);
             return CheckUser($retries+1, $maxretries);
         }
         else
         {
-            curl_close ($ch);
-            unset($ch);  
-
-            $status = Login();
-
-            if($status == 2)
-            {
-                echo('2<br/>SSL Error occured, please reconfigure [ssl_curl_problem_solving] array (SSL options) in script.');
-            }
-            elseif ($status == 1)
-            {
-                echo('1<br/>Error occured, cannot access Rockstar Social Club data.');
-            }
-            else if($status == 0)
-            {
-                echo('0<br/>Error occured, cannot log-in to Rockstar Social Club with provided credentials.');
-            }
-
-            exit();            
+            LoginErrorCode($index);         
         }  
     }
 
-    CheckUser(0, 1);
+    function SendMessage($retries, $maxretries, $index = 0)
+    {
+        $SocialClubID = isset($_GET['SocialClubID']) ? $_GET['SocialClubID'] : '';
+        $message = isset($_GET['message']) ? $_GET['message'] : '';
+
+        $reqData = GetRequestData($index, 'http://socialclub.rockstargames.com/member/'. $SocialClubID .'/', false);
+
+        $RequestVerificationToken = $reqData[0];
+        if($RequestVerificationToken == "")
+        {
+            echo('3<br/>Message cannot be sent, RequestVerificationToken error.');
+            return;
+        }
+
+        if((strpos($reqData[1], $SocialClubID) !== false))
+        {
+            $ch_message = curl_init();
+
+            global $static_curl_options;
+
+            $data = array("nickname" => $SocialClubID, "__RequestVerificationToken" => $RequestVerificationToken, "message" => $message);  
+            $json_data = json_encode($data);
+
+            curl_setopt_array( $ch_message, (array(
+                CURLOPT_URL              => 'http://socialclub.rockstargames.com/Message/AddMessage',
+                CURLOPT_POST             => true,
+                CURLOPT_POSTFIELDS       => $json_data,
+                CURLOPT_HTTPHEADER       => array('Accept-Encoding: gzip, deflate', 'Content-Type: application/json; charset=UTF-8','Content-Length:' . strlen($json_data), 'RequestVerificationToken: ' . $RequestVerificationToken)
+            ) + $static_curl_options));
+
+            $retData = curl_exec($ch_message);
+
+            $http_code = curl_getinfo($ch_message, CURLINFO_HTTP_CODE);
+
+            curl_close ($ch_message);            
+
+            $retJSON = json_decode($retData);
+
+            if($http_code == 200)
+            {
+                if($retJSON->{'Status'} == true)
+                {
+                    echo('5<br/>Message sent.');
+                }
+                else
+                {
+                    echo('4<br/>Error sending message:<br/>');
+                    var_dump($retJSON);
+                }
+            }
+            else if($retries < $maxretries)
+            {
+                Login($index);
+                return SendMessage($retries+1, $maxretries);
+            }
+            else
+            {
+                echo('3<br/>Message cannot be sent, unkown error:<br/>' . $retData);
+            }
+        }
+        else if($retries < $maxretries)
+        {
+            Login($index);
+            return SendMessage($retries+1, $maxretries);
+        }
+        else
+        {
+            LoginErrorCode($index);    
+        }  
+    }
+
+    $action = isset($_GET['action']) ? $_GET['action'] : 0;
+
+    switch($action)
+    {
+        case 0:
+        CheckUser(0, 1);
+        break;
+
+        case 1:
+        SendMessage(0, 1);
+        break;
+    }
 ?>
