@@ -41,7 +41,7 @@
             exit();
 
             case 1:
-            echo("1<BR/>ERROR: Invalid credentials, cannot login to Rockstar SocialClub.");
+            echo("1<BR/>ERROR: Invalid credentials, cannot logon to Rockstar SocialClub.");
             exit();
         }
     }
@@ -69,7 +69,7 @@
             echo("4<BR/>ERROR: User does not own a legitimate copy of GTA:V or privacy settings do not allow viewing this information.");
             break;
             case 0:
-            echo("9<BR/>SUCCES: User owns a legitimate copy of GTA:V on any platform.");
+            echo("9<BR/>SUCCESS: User owns a legitimate copy of GTA:V on any platform.");
             break;
         }
     }
@@ -89,10 +89,10 @@
             echo("4<BR/>ERROR: SSL error or Rockstar Service is unavailable.");
             break;
             case 1:
-            echo("5<BR/>ERROR: Unknown error while sending message.");
+            echo("5<BR/>ERROR: Unknown error while sending the message.");
             break;
             case 0:
-            echo("9<BR/>SUCCES: Message send.");
+            echo("9<BR/>SUCCESS: Message sent.");
             break;
         }        
     }
