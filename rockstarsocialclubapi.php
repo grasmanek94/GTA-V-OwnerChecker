@@ -40,7 +40,8 @@
                 CURLOPT_TIMEOUT          => 5,
                 CURLOPT_MAXREDIRS        => 3,
                 CURLOPT_COOKIEJAR        => $this->_cookiefile,
-                CURLOPT_COOKIEFILE       => $this->_cookiefile  
+                CURLOPT_COOKIEFILE       => $this->_cookiefile,
+                CURLOPT_USERAGENT        => "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0",
             );
 
             $this->_ssl_curl_problem_solving = array
@@ -81,7 +82,12 @@
             curl_setopt_array($this->_connection, (array(
                 CURLOPT_URL              => $url,
                 CURLOPT_FOLLOWLOCATION   => true,
-                CURLOPT_HTTPHEADER       => array('Accept-Encoding: gzip, deflate')
+                CURLOPT_HTTPHEADER       => array(
+                    'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language: en-US,en;q=0.5',
+                    'Accept-Encoding: gzip, deflate',
+                    'Connection: keep-alive',
+                    'Cache-Control: max-age=0')
             ) + $this->_static_curl_options + (($url[4] == 's' || $url[4] == 'S') ? $this->_ssl_curl_problem_solving : array())));
 
             $homepage = curl_exec($this->_connection);
@@ -160,7 +166,12 @@
 
             curl_setopt_array($this->_connection, (array(
                 CURLOPT_URL              => 'http://socialclub.rockstargames.com',
-                CURLOPT_HTTPHEADER       => array('Accept-Encoding: gzip, deflate')
+                CURLOPT_HTTPHEADER       => array(
+                    'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language: en-US,en;q=0.5',
+                    'Accept-Encoding: gzip, deflate',
+                    'Connection: keep-alive',
+                    'Cache-Control: max-age=0')
             ) + $this->_static_curl_options));
 
             curl_exec($this->_connection);
@@ -176,7 +187,12 @@
     
             curl_setopt_array($this->_connection, (array(
                 CURLOPT_URL              => 'http://socialclub.rockstargames.com/games/gtav/api/mp/gun/0/minigun?nickname=' . $SocialClubID,
-                CURLOPT_HTTPHEADER       => array('Accept-Encoding: gzip, deflate')
+                CURLOPT_HTTPHEADER       => array(
+                    'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language: en-US,en;q=0.5',
+                    'Accept-Encoding: gzip, deflate',
+                    'Connection: keep-alive',
+                    'Cache-Control: max-age=0')
             ) + $this->_static_curl_options));
 
             $page = curl_exec ($this->_connection);
